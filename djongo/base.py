@@ -205,10 +205,10 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         """
         Closes the client connection to the database.
         """
-        if self.connection is not None:
-            with self.wrap_database_errors:
-                self.connection.client.close()
-                logger.debug('MongoClient connection closed')
+        # if self.connection is not None:
+        #     with self.wrap_database_errors:
+        #         self.connection.client.close()
+        #         logger.debug('MongoClient connection closed')
 
     def _rollback(self):
         raise Error
