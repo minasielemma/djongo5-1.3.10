@@ -86,12 +86,12 @@ if sys.version_info.major == 3 and sys.version_info.minor < 7:
 
 setup(
     name="djongo5",
-    version=find_version("djongo", "__init__.py"),
+    # version=find_version("djongo", "__init__.py"),
     include_package_data=True,
     packages=packages,
     url="https://www.djongomapper.com/",
     license="AGPL",
-    author="doableware",
+    author="doableware and minasie",
     author_email="support@doableware.com",
     description=(
         "Driver for allowing Django 5 to use MongoDB as the database backend."
