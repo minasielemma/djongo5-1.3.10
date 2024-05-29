@@ -172,9 +172,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         if self.client_connection is not None:
             self.client_connection.close()
             logger.debug('Existing MongoClient connection closed')
-
+        print(name)
         self.client_connection = Database.connect(db=name, **connection_params)
-        logger.debug('New Database connection')
+        logger.debug('New Database connection')  
 
         database = self.client_connection[name]
         self.djongo_connection = DjongoClient(database, es)
