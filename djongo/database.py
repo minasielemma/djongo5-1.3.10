@@ -4,12 +4,15 @@ from threading import Lock
 
 logger = getLogger(__name__)
 lock = Lock()
+mongo_client_instance:MongoClient = None
 
-def connect(db, **kwargs):
+def connect(**kwargs):
+    global mongo_client_instance
     with lock:
-        if db not in clients:
+        if mongo_client_instance is None:
             logger.debug('New MongoClient connection')
-            return  MongoClient(**kwargs, connect=False)
+            mongo_client_instance = MongoClient(**kwargs, connect=False)
+        return mongo_client_instance
 
 
 class Error(Exception):  # NOQA: StandardError undefined on PY3
