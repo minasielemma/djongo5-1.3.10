@@ -124,26 +124,31 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def get_connection_params(self):
         """
-        Acquire database connection parameters to match the Django settings.
+        Default method to acquire database connection parameters.
+
+        Sets connection parameters to match settings.py, and sets
+        default values to blank fields.
         """
         valid_settings = {
             'NAME': 'name',
             'ENFORCE_SCHEMA': 'enforce_schema',
-            'CLIENT': 'client',
         }
         connection_params = {
-            'name': 'betting_data',  # Default value if not set in settings
-            'enforce_schema': True,  # Default value if not set in settings
-            'CLIENT': {}  # Default value if not set in settings
+            'name': 'djongo_test',
+            'enforce_schema': False
         }
         for setting_name, kwarg in valid_settings.items():
-            setting = self.settings_dict.get(setting_name)
-            if setting is not None:
-                connection_params[kwarg] = setting
+            try:
+                setting = self.settings_dict[setting_name]
+            except KeyError:
+                continue
 
-        # The 'client' key requires special handling to merge nested dictionaries
-        client_settings = self.settings_dict.get('CLIENT', {})
-        connection_params['CLIENT'].update(client_settings)
+            if setting or setting is False:
+                connection_params[kwarg] = setting
+        try:
+            connection_params.update(self.settings_dict['CLIENT'])
+        except KeyError:
+            pass
 
         return connection_params
 
