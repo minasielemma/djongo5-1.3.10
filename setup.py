@@ -15,7 +15,7 @@ Usage
 
 1. Install djongo::
 
-      pip install djongo5
+      pip install git+https://github.com/minasielemma/djongo5-1.3.10.git
 
 2. Into settings.py file of your project, add::
 
