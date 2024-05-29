@@ -124,31 +124,26 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def get_connection_params(self):
         """
-        Default method to acquire database connection parameters.
-
-        Sets connection parameters to match settings.py, and sets
-        default values to blank fields.
+        Acquire database connection parameters to match the Django settings.
         """
         valid_settings = {
             'NAME': 'name',
             'ENFORCE_SCHEMA': 'enforce_schema',
+            'CLIENT': 'client',
         }
         connection_params = {
-            'name': 'djongo_test',
-            'enforce_schema': False
+            'name': 'betting_data',  # Default value if not set in settings
+            'enforce_schema': True,  # Default value if not set in settings
+            'client': {}  # Default value if not set in settings
         }
         for setting_name, kwarg in valid_settings.items():
-            try:
-                setting = self.settings_dict[setting_name]
-            except KeyError:
-                continue
-
-            if setting or setting is False:
+            setting = self.settings_dict.get(setting_name)
+            if setting is not None:
                 connection_params[kwarg] = setting
-        try:
-            connection_params.update(self.settings_dict['CLIENT'])
-        except KeyError:
-            pass
+
+        # The 'client' key requires special handling to merge nested dictionaries
+        client_settings = self.settings_dict.get('CLIENT', {})
+        connection_params['client'].update(client_settings)
 
         return connection_params
 
@@ -161,7 +156,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         get_connection_params method.
         """
 
-        name = connection_params.pop('mongodb')
+        name = connection_params.pop('name')
         es = connection_params.pop('enforce_schema')
 
         connection_params['document_class'] = OrderedDict
@@ -172,9 +167,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         if self.client_connection is not None:
             self.client_connection.close()
             logger.debug('Existing MongoClient connection closed')
-        print(name)
+
         self.client_connection = Database.connect(db=name, **connection_params)
-        logger.debug('New Database connection')  
+        logger.debug('New Database connection')
 
         database = self.client_connection[name]
         self.djongo_connection = DjongoClient(database, es)
