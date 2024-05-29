@@ -161,7 +161,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         get_connection_params method.
         """
 
-        name = connection_params.pop('name')
+        name = connection_params.pop('mongodb')
         es = connection_params.pop('enforce_schema')
 
         connection_params['document_class'] = OrderedDict
