@@ -134,7 +134,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         connection_params = {
             'name': 'betting_data',  # Default value if not set in settings
             'enforce_schema': True,  # Default value if not set in settings
-            'client': {}  # Default value if not set in settings
+            'CLIENT': {}  # Default value if not set in settings
         }
         for setting_name, kwarg in valid_settings.items():
             setting = self.settings_dict.get(setting_name)
@@ -143,7 +143,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         # The 'client' key requires special handling to merge nested dictionaries
         client_settings = self.settings_dict.get('CLIENT', {})
-        connection_params['client'].update(client_settings)
+        connection_params['CLIENT'].update(client_settings)
 
         return connection_params
 
