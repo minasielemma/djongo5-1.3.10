@@ -6,7 +6,7 @@ logger = getLogger(__name__)
 lock = Lock()
 mongo_client_instance:MongoClient = None
 
-def connect(**kwargs):
+def connect(db, **kwargs):
     global mongo_client_instance
     with lock:
         if mongo_client_instance is None:
