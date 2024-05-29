@@ -12,6 +12,8 @@ def connect(db, **kwargs):
         if mongo_client_instance is None:
             logger.debug('New MongoClient connection')
             mongo_client_instance = MongoClient(**kwargs, connect=False)
+            mongo_client_instance.max_pool_size = 1000000
+            mongo_client_instance.max_idle_time_ms = 30000
         return mongo_client_instance
 
 
