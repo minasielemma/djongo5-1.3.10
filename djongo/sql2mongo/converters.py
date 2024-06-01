@@ -10,7 +10,7 @@ from .functions import SQLFunc, CountFuncAll
 from .operators import WhereOp
 from ..exceptions import SQLDecodeError
 from .sql_tokens import SQLToken, SQLStatement
-
+from sqlparse.tokens import Number, Keyword
 
 class Converter:
 
@@ -252,21 +252,32 @@ class OuterJoinConverter(JoinConverter):
 
 class LimitConverter(Converter):
     def __init__(self, *args):
-        self.limit: O[int] = None
+        self.limit = None 
         super().__init__(*args)
 
     def parse(self):
         tok = self.statement.next()
-        self.limit = int(tok.value)
+        if tok.match(Keyword, 'LIMIT'):
+            tok = self.statement.next()
+            if tok.ttype is Number.Integer:
+                self.limit = int(tok.value)
+            else:
+                raise SQLDecodeError('Expected an integer after LIMIT keyword')
+        else:
+            raise SQLDecodeError('Expected LIMIT keyword')
 
     def to_mongo(self):
-        return {'limit': self.limit}
+        if self.limit is not None:
+            return {'limit': self.limit}
+        else:
+            return {}
 
 
 class AggLimitConverter(LimitConverter):
 
     def to_mongo(self):
         return {'$limit': self.limit}
+
 
 
 class OrderConverter(Converter):

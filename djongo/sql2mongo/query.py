@@ -131,6 +131,10 @@ class SelectQuery(DQLQuery):
             elif tok.match(tokens.Keyword, 'ORDER BY'):
                 self.order = OrderConverter(self, statement)
 
+            elif tok.match(tokens.Keyword, 'LIMIT'):
+                self.limit = LimitConverter(self, statement)
+                limit_criteria = self.limit.to_mongo()
+                
             elif tok.match(tokens.Keyword, 'OFFSET'):
                 self.offset = OffsetConverter(self, statement)
 
