@@ -252,19 +252,23 @@ class OuterJoinConverter(JoinConverter):
 
 class LimitConverter(Converter):
     def __init__(self, *args):
-        self.limit = None 
+        self.limit = None
         super().__init__(*args)
 
     def parse(self):
-        tok = self.statement.next()
-        if tok.match(Keyword, 'LIMIT'):
+        # Look for the LIMIT keyword
+        while self.statement:
             tok = self.statement.next()
-            if tok.ttype is Number:
-                self.limit = int(tok.value)
-            else:
-                raise SQLDecodeError('Expected an integer after LIMIT keyword')
-        else:
-            raise SQLDecodeError('Expected LIMIT keyword')
+            if tok.match(Keyword, 'LIMIT'):
+                # The next token should be the limit value
+                tok = self.statement.next()
+                if tok.ttype is Number.Integer:
+                    self.limit = int(tok.value)
+                    break
+                else:
+                    raise SQLDecodeError('Expected an integer after LIMIT keyword')
+            elif tok.ttype is Token.Error:
+                raise SQLDecodeError('Unexpected token type')
 
     def to_mongo(self):
         if self.limit is not None:
