@@ -1,4 +1,3 @@
-
 from django.db.backends.base.features import BaseDatabaseFeatures
 
 
@@ -10,3 +9,6 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     supports_timezones = False
     uses_savepoints = False
     can_clone_databases = True
+    test_db_allows_multiple_connections = False
+    supports_unspecified_pk = True
+

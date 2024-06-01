@@ -47,35 +47,36 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     # This dictionary will map Django model field types to appropriate data
     # types to be used in the database.
     data_types = {
-        'AutoField': 'int32',
-        'BigAutoField': 'int64',
-        'BinaryField': 'binary',
-        'BooleanField': 'boolean',
+        'AutoField': 'int',
+        'BigAutoField': 'long',
+        'BinaryField': 'binData',
+        'BooleanField': 'bool',
         'CharField': 'string',
         'CommaSeparatedIntegerField': 'string',
         'DateField': 'date',
         'DateTimeField': 'date',
-        'DecimalField': 'number',
-        'DurationField': 'int64',
+        'DecimalField': 'decimal',
+        'DurationField': 'long',
         'FileField': 'string',
         'FilePathField': 'string',
-        'FloatField': 'number',
-        'IntegerField': 'int32',
-        'BigIntegerField': 'int64',
+        'FloatField': 'double',
+        'IntegerField': 'int',
+        'BigIntegerField': 'long',
         'IPAddressField': 'string',
         'GenericIPAddressField': 'string',
-        'NullBooleanField': 'boolean',
-        'OneToOneField': 'int32',
-        'PositiveIntegerField': 'int64',
-        'PositiveSmallIntegerField': 'int32',
+        'NullBooleanField': 'bool',
+        'OneToOneField': 'int',
+        'PositiveIntegerField': 'long',
+        'PositiveSmallIntegerField': 'int',
         'SlugField': 'string',
-        'SmallIntegerField': 'int32',
+        'SmallIntegerField': 'int',
         'TextField': 'string',
         'TimeField': 'date',
         'UUIDField': 'string',
-        'ObjectIdField': 'oid',
-        'ListField': 'array',
-        'DictField': 'object'
+        'GenericObjectIdField': 'objectId',
+        'ObjectIdField': 'objectId',
+        'EmbeddedField': 'object',
+        'ArrayField': 'array'
     }
 
     data_types_suffix = {
@@ -99,6 +100,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         'endswith': 'LIKE %s',
         'istartswith': 'iLIKE %s',
         'iendswith': 'iLIKE %s',
+        'orderby': 'ORDER BY %s',
     }
 
     vendor = 'djongo'
@@ -130,22 +132,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         """
         valid_settings = {
             'NAME': 'name',
-            'HOST': 'host',
-            'PORT': 'port',
-            'USER': 'username',
-            'PASSWORD': 'password',
-            'AUTH_SOURCE': 'authSource',
-            'AUTH_MECHANISM': 'authMechanism',
             'ENFORCE_SCHEMA': 'enforce_schema',
-            'REPLICASET': 'replicaset',
-            'SSL': 'ssl',
-            'SSL_CERTFILE': 'ssl_certfile',
-            'SSL_CA_CERTS': 'ssl_ca_certs',
-            'READ_PREFERENCE': 'read_preference'
         }
         connection_params = {
             'name': 'djongo_test',
-            'enforce_schema': True
+            'enforce_schema': False
         }
         for setting_name, kwarg in valid_settings.items():
             try:
@@ -155,6 +146,10 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
             if setting or setting is False:
                 connection_params[kwarg] = setting
+        try:
+            connection_params.update(self.settings_dict['CLIENT'])
+        except KeyError:
+            pass
 
         return connection_params
 
@@ -165,9 +160,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         Dictionary correct setup is made through the
         get_connection_params method.
-
-        TODO: This needs to be made more generic to accept
-        other MongoClient parameters.
         """
 
         name = connection_params.pop('name')
@@ -178,9 +170,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         # To prevent leaving unclosed connections behind,
         # client_conn must be closed before a new connection
         # is created.
-        if self.client_connection is not None:
-            self.client_connection.close()
-            logger.debug('Existing MongoClient connection closed')
+        # if self.client_connection is not None:
+        #     self.client_connection.close()
+        #     logger.debug('Existing MongoClient connection closed')
 
         self.client_connection = Database.connect(db=name, **connection_params)
         logger.debug('New Database connection')
@@ -214,10 +206,10 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         """
         Closes the client connection to the database.
         """
-        if self.connection:
-            with self.wrap_database_errors:
-                self.connection.client.close()
-                logger.debug('MongoClient connection closed')
+        # if self.connection is not None:
+        #     with self.wrap_database_errors:
+        #         self.connection.client.close()
+        #         logger.debug('MongoClient connection closed')
 
     def _rollback(self):
         raise Error
