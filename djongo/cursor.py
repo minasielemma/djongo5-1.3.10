@@ -50,14 +50,12 @@ class Cursor:
         try:
             self.result = Query(
                 self.client_conn,
-                self.db_conn,
                 self.connection_properties,
                 sql,
                 params)
         except Exception as e:
             db_exe = DatabaseError()
             raise db_exe from e
-
     def fetchmany(self, size=1):
         ret = []
         for _ in range(size):
