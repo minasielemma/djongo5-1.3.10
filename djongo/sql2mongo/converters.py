@@ -259,7 +259,7 @@ class LimitConverter(Converter):
         tok = self.statement.next()
         if tok.match(Keyword, 'LIMIT'):
             tok = self.statement.next()
-            if tok.ttype is Number.Integer:
+            if tok.ttype is Number:
                 self.limit = int(tok.value)
             else:
                 raise SQLDecodeError('Expected an integer after LIMIT keyword')
