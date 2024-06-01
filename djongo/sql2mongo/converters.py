@@ -11,6 +11,7 @@ from .operators import WhereOp
 from ..exceptions import SQLDecodeError
 from .sql_tokens import SQLToken, SQLStatement
 from sqlparse.tokens import Number, Keyword
+from sqlparse.sql import Token
 
 class Converter:
 
@@ -264,11 +265,21 @@ class LimitConverter(Converter):
                 tok = self.statement.next()
                 if tok.ttype is Number.Integer:
                     self.limit = int(tok.value)
+                    # Ensure no other tokens after LIMIT
+                    tok = self.statement.next()
+                    if tok is not None:
+                        raise SQLDecodeError('No other clauses should follow LIMIT')
                     break
                 else:
                     raise SQLDecodeError('Expected an integer after LIMIT keyword')
             elif tok.ttype is Token.Error:
                 raise SQLDecodeError('Unexpected token type')
+
+    def to_mongo(self):
+        if self.limit is not None:
+            return {'limit': self.limit}
+        else:
+            return {}
 
     def to_mongo(self):
         if self.limit is not None:
