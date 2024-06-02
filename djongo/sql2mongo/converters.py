@@ -256,12 +256,18 @@ class LimitConverter(Converter):
         super().__init__(*args)
 
     def parse(self):
+        # Skip the 'LIMIT' keyword
+        self.statement.next() 
+
+        # Get the limit value
         tok = self.statement.next()
-        self.limit = int(tok.value)
+        if tok.ttype == tokens.Number.Integer:
+            self.limit = int(tok.value)
+        else:
+            raise SQLDecodeError(f"Invalid limit value: {tok.value}")
 
     def to_mongo(self):
         return {'limit': self.limit}
-
 
 class AggLimitConverter(LimitConverter):
 
