@@ -15,4 +15,3 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
 
     def prepare_default(self, value):
         raise NotImplementedError()
-

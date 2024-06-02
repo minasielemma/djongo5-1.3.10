@@ -175,5 +175,3 @@ class SimpleFunc(SingleParamFunc):
             return {f'${self.func.lower()}': field}
         else:
             raise SQLDecodeError(f'Unsupported func: {self.func}')
-
-

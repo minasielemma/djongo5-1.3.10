@@ -938,6 +938,3 @@ class Query:
         'DROP': _drop,
         'ALTER': _alter
     }
-
-
-

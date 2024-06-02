@@ -11,4 +11,3 @@ class DatabaseFeatures(BaseDatabaseFeatures):
     can_clone_databases = True
     test_db_allows_multiple_connections = False
     supports_unspecified_pk = True
-
