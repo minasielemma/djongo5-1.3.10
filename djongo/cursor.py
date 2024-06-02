@@ -54,8 +54,10 @@ class Cursor:
                 self.connection_properties,
                 sql,
                 params)
-        except Exception as e:
-            db_exe = DatabaseError()
+        except (pymongo.errors.OperationFailure, pymongo.errors.ConnectionFailure) as e:
+            # Provide more context in the error message
+            error_message = f"MongoDB error during query execution: {e}"
+            db_exe = DatabaseError(error_message)
             raise db_exe from e
 
     def fetchmany(self, size=1):
