@@ -115,45 +115,59 @@ class SelectQuery(DQLQuery):
         self._cursor: Optional[U[BasicCursor, CommandCursor]] = None
         super().__init__(*args)
 
-    def parse(self):
-        statement = SQLStatement(self.statement)
+def parse(self):
+    statement = SQLStatement(self.statement)
 
-        for tok in statement:
-            if tok.match(tokens.DML, 'SELECT'):
-                self.selected_columns = ColumnSelectConverter(self, statement)
+    tok = statement.next()
+    if tok.match(tokens.DML, 'SELECT'):
+        self.selected_columns = ColumnSelectConverter(self, statement)
 
-            elif tok.match(tokens.Keyword, 'FROM'):
-                FromConverter(self, statement)
+    tok = statement.next()
+    if tok.match(tokens.Keyword, 'FROM'):
+        FromConverter(self, statement)
 
-            elif tok.match(tokens.Keyword, 'LIMIT'):
-                self.limit = LimitConverter(self, statement)
+    while True:
+        tok = statement.next()
+        if tok.match(tokens.Keyword, 'INNER JOIN'):
+            converter = InnerJoinConverter(self, statement)
+            self.joins.append(converter)
+        elif tok.match(tokens.Keyword, 'LEFT OUTER JOIN'):
+            converter = OuterJoinConverter(self, statement)
+            self.joins.append(converter)
+        else:
+            statement.skip(-1)
+            break
 
-            elif tok.match(tokens.Keyword, 'ORDER BY'):
-                self.order = OrderConverter(self, statement)
+    tok = statement.next()
+    if isinstance(tok, Where):
+        self.where = WhereConverter(self, statement)
 
-            elif tok.match(tokens.Keyword, 'OFFSET'):
-                self.offset = OffsetConverter(self, statement)
+    tok = statement.next()
+    if tok.match(tokens.Keyword, 'GROUP'):
+        self.groupby = GroupbyConverter(self, statement)
 
-            elif tok.match(tokens.Keyword, 'INNER JOIN'):
-                converter = InnerJoinConverter(self, statement)
-                self.joins.append(converter)
+    tok = statement.next()
+    if tok.match(tokens.Keyword, 'HAVING'):
+        self.having = HavingConverter(self, statement)
 
-            elif tok.match(tokens.Keyword, 'LEFT OUTER JOIN'):
-                converter = OuterJoinConverter(self, statement)
-                self.joins.append(converter)
+    tok = statement.next()
+    if tok.match(tokens.Keyword, 'ORDER BY'):
+        self.order = OrderConverter(self, statement)
 
-            elif tok.match(tokens.Keyword, 'GROUP'):
-                self.groupby = GroupbyConverter(self, statement)
+    tok = statement.next()
+    if tok.match(tokens.Keyword, 'LIMIT'):
+        self.limit = LimitConverter(self, statement)
 
-            elif tok.match(tokens.Keyword, 'HAVING'):
-                self.having = HavingConverter(self, statement)
+    tok = statement.next()
+    if tok.match(tokens.Keyword, 'OFFSET'):
+        self.offset = OffsetConverter(self, statement)
 
-            elif isinstance(tok, Where):
-                self.where = WhereConverter(self, statement)
-
-            else:
-                raise SQLDecodeError(f'Unknown keyword: {tok}')
-
+    while True:
+        tok = statement.next()
+        if tok is None:
+            break
+        else:
+            raise SQLDecodeError(f'Unknown keyword: {tok}')
     def __iter__(self):
 
         if self._cursor is None:
