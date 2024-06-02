@@ -256,11 +256,12 @@ class LimitConverter(Converter):
         super().__init__(*args)
 
     def parse(self):
+        tok = self.statement.next()
         # Skip the 'LIMIT' keyword
-        self.statement.next() 
+        # self.statement.next() 
 
         # Get the limit value
-        tok = self.statement.next()
+        
         if tok.ttype == tokens.Number.Integer:
             self.limit = int(tok.value)
         else:
