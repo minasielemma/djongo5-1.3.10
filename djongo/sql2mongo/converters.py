@@ -282,7 +282,7 @@ class OrderConverter(Converter):
         super().__init__(*args)
 
     def parse(self):
-        tok = self.statement.next()
+        # tok = self.statement.next()
         # if not tok.match(tokens.Keyword, 'BY'):
         #     raise SQLDecodeError
 
@@ -449,9 +449,9 @@ class GroupbyConverter(Converter, _Tokens2Id):
         super().__init__(*args)
 
     def parse(self):
-        tok = self.statement.next()
-        if not tok.match(tokens.Keyword, 'BY'):
-            raise SQLDecodeError
+        # tok = self.statement.next()
+        # if not tok.match(tokens.Keyword, 'BY'):
+        #     raise SQLDecodeError
         tok = self.statement.next()
         self.sql_tokens.extend(SQLToken.tokens2sql(tok, self.query))
 

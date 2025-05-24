@@ -16,9 +16,12 @@ from pymongo.errors import OperationFailure, CollectionInvalid
 from sqlparse import parse as sqlparse
 from sqlparse import tokens
 from sqlparse.sql import (
-    Identifier, Parenthesis,
+    Identifier,
+    Parenthesis,
     Where,
-    Statement)
+    Statement,
+    Values,
+)
 
 from ..exceptions import SQLDecodeError, MigrationError, print_warn
 from .functions import SQLFunc
@@ -115,59 +118,45 @@ class SelectQuery(DQLQuery):
         self._cursor: Optional[U[BasicCursor, CommandCursor]] = None
         super().__init__(*args)
 
-def parse(self):
-    statement = SQLStatement(self.statement)
+    def parse(self):
+        statement = SQLStatement(self.statement)
 
-    tok = statement.next()
-    if tok.match(tokens.DML, 'SELECT'):
-        self.selected_columns = ColumnSelectConverter(self, statement)
+        for tok in statement:
+            if tok.match(tokens.DML, 'SELECT'):
+                self.selected_columns = ColumnSelectConverter(self, statement)
 
-    tok = statement.next()
-    if tok.match(tokens.Keyword, 'FROM'):
-        FromConverter(self, statement)
+            elif tok.match(tokens.Keyword, 'FROM'):
+                FromConverter(self, statement)
 
-    while True:
-        tok = statement.next()
-        if tok.match(tokens.Keyword, 'INNER JOIN'):
-            converter = InnerJoinConverter(self, statement)
-            self.joins.append(converter)
-        elif tok.match(tokens.Keyword, 'LEFT OUTER JOIN'):
-            converter = OuterJoinConverter(self, statement)
-            self.joins.append(converter)
-        else:
-            statement.skip(-1)
-            break
+            elif tok.match(tokens.Keyword, 'LIMIT'):
+                self.limit = LimitConverter(self, statement)
 
-    tok = statement.next()
-    if isinstance(tok, Where):
-        self.where = WhereConverter(self, statement)
+            elif tok.match(tokens.Keyword, 'ORDER BY'):
+                self.order = OrderConverter(self, statement)
 
-    tok = statement.next()
-    if tok.match(tokens.Keyword, 'GROUP'):
-        self.groupby = GroupbyConverter(self, statement)
+            elif tok.match(tokens.Keyword, 'OFFSET'):
+                self.offset = OffsetConverter(self, statement)
 
-    tok = statement.next()
-    if tok.match(tokens.Keyword, 'HAVING'):
-        self.having = HavingConverter(self, statement)
+            elif tok.match(tokens.Keyword, 'INNER JOIN'):
+                converter = InnerJoinConverter(self, statement)
+                self.joins.append(converter)
 
-    tok = statement.next()
-    if tok.match(tokens.Keyword, 'ORDER BY'):
-        self.order = OrderConverter(self, statement)
+            elif tok.match(tokens.Keyword, 'LEFT OUTER JOIN'):
+                converter = OuterJoinConverter(self, statement)
+                self.joins.append(converter)
 
-    tok = statement.next()
-    if tok.match(tokens.Keyword, 'LIMIT'):
-        self.limit = LimitConverter(self, statement)
+            elif tok.match(tokens.Keyword, 'GROUP BY'):
+                self.groupby = GroupbyConverter(self, statement)
 
-    tok = statement.next()
-    if tok.match(tokens.Keyword, 'OFFSET'):
-        self.offset = OffsetConverter(self, statement)
+            elif tok.match(tokens.Keyword, 'HAVING'):
+                self.having = HavingConverter(self, statement)
 
-    while True:
-        tok = statement.next()
-        if tok is None:
-            break
-        else:
-            raise SQLDecodeError(f'Unknown keyword: {tok}')
+            elif isinstance(tok, Where):
+                self.where = WhereConverter(self, statement)
+
+            else:
+                raise SQLDecodeError(f'Unknown keyword: {tok}')
+
     def __iter__(self):
 
         if self._cursor is None:
@@ -369,17 +358,22 @@ class InsertQuery(DMLQuery):
 
     def _fill_values(self, statement: SQLStatement):
         for tok in statement:
-            if isinstance(tok, Parenthesis):
-                placeholder = SQLToken.token2sql(tok, self)
-                values = []
-                for index in placeholder:
-                    if isinstance(index, int):
-                        values.append(self.params[index])
-                    else:
-                        values.append(index)
-                self._values.append(values)
-            elif not tok.match(tokens.Keyword, 'VALUES'):
-                raise SQLDecodeError
+            if isinstance(tok, Values):
+                for inner_tok in tok.tokens:
+                    if isinstance(inner_tok, Parenthesis):
+                        placeholder = SQLToken.token2sql(inner_tok, self)
+                        values = []
+                        for index in placeholder:
+                            if isinstance(index, int):
+                                values.append(self.params[index])
+                            else:
+                                values.append(index)
+                        self._values.append(values)
+                    elif (
+                        not inner_tok.match(tokens.Keyword, 'VALUES')
+                        and not inner_tok.match(tokens.Whitespace, ' ')
+                    ):
+                        raise SQLDecodeError
 
     def execute(self):
         docs = []
